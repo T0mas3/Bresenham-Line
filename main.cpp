@@ -1,0 +1,46 @@
+/*
+ * main.cpp
+ *
+ *  Created on: Sep 21, 2013
+ *      Author: tomas
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <GL/glut.h>
+
+#define GRID_SIZE 32
+
+void display(void) {
+	int i;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0.5, 0.5, 0.5);
+
+	glBegin(GL_LINES);
+	for (i = -(GRID_SIZE/2); i <= (GRID_SIZE/2); i++) { //TODO optimize
+		float x = i / (float)(GRID_SIZE/2);
+		glVertex2f(x, -1.0);
+		glVertex2f(x, 1.0);
+
+		glVertex2f(-1.0, x);
+		glVertex2f(1.0, x);
+	}
+	glEnd();
+
+	glFlush();
+}
+
+void init(void) {
+}
+
+int main(int argc, char *argv[]) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
+	glutInitWindowSize(800, 600);
+	glutInitWindowPosition(100, 50);
+	glutCreateWindow("My first openGL program");
+	init();
+	glutDisplayFunc(display);
+	glutMainLoop();
+	return 0;
+}
