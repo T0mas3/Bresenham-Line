@@ -36,7 +36,7 @@ void init(void) {
 int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(600, 600);
 	glutInitWindowPosition(100, 50);
 	glutCreateWindow("My first openGL program");
 	init();
