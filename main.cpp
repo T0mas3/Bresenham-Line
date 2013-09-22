@@ -11,6 +11,31 @@
 
 #define GRID_SIZE 32
 
+void colorGridCell(int x, int y) {
+
+	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
+	float topLeftX = (cornerLength * x) - 1;
+	float topLeftY = (cornerLength * y) - 1;
+
+	glColor3f(0, 0.5, 0.5);
+
+	glBegin(GL_QUADS);
+		glVertex2f(topLeftX, topLeftY);
+		glVertex2f(topLeftX + cornerLength, topLeftY);
+
+		glVertex2f(topLeftX + cornerLength, topLeftY + cornerLength);
+		glVertex2f(topLeftX, topLeftY + cornerLength);
+	glEnd();
+
+//  Sample rect
+//	glVertex2f(-0.5, 0.5);
+//	glVertex2f(0.5, 0.5);
+//
+//	glVertex2f(0.5, -0.5);
+//	glVertex2f(-0.5, -0.5);
+
+}
+
 void display(void) {
 	int i;
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -26,6 +51,11 @@ void display(void) {
 		glVertex2f(1.0, x);
 	}
 	glEnd();
+
+	colorGridCell(0, 0);
+	colorGridCell(31, 31);
+	colorGridCell(0, 31);
+	colorGridCell(31, 0);
 
 	glFlush();
 }
