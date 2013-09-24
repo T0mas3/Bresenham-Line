@@ -25,6 +25,7 @@ float beginY = 0;
 float endX = 0;
 float endY = 0;
 
+// TODO better titles
 int gridBeginX = 0;
 int gridBeginY = 0;
 int gridEndX = 0;
@@ -60,19 +61,40 @@ void colorGridCell(int x, int y) {
 
 }
 
-void drawBresenhamLine(){
+void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX, int gridEndY){
 
-	int deltax = gridEndX - gridBeginX;
-	int deltay = gridEndY - gridBeginY;
-	float error = 0;
-	float deltaerr = fabs((float)deltay / (float)deltax);
-	int y = gridBeginY;
-	for (int x = gridBeginX; x <= gridEndX; x++) {
-		colorGridCell(x, y);
-		error = error + deltaerr;
-		if (error >= 0.5) {
-			y = y + 1;
-			error = error - 1.0;
+	bool steep = abs(gridEndY - gridBeginY) > abs(gridEndX - gridBeginX);
+	if (steep){
+		swap(gridBeginX, gridBeginY);
+		swap(gridEndX,   gridEndY);
+	}
+
+	if (gridBeginX > gridEndX){
+        swap(gridBeginX, gridEndX);
+        swap(gridBeginY, gridEndY);
+	}
+
+	int deltaX = gridEndX - gridBeginX;
+	int deltay = abs (gridEndY - gridBeginY);
+	int error = deltaX / 2;
+	int currentY = gridBeginY;
+
+	int yStep = 1;
+	if (gridBeginY >= gridEndY){
+		yStep = -1;
+	}
+
+	for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
+		if (steep) {
+			colorGridCell(currentY, currentX);
+		} else {
+			colorGridCell(currentX, currentY);
+		}
+
+		error = error - deltay;
+		if (error < 0) {
+			currentY = currentY + yStep;
+			error = error + deltaX;
 		}
 	}
 }
@@ -143,7 +165,7 @@ void display(void) {
 	drawGrid();
 
 	if (shouldDrawBresenhamLine){
-		drawBresenhamLine();
+		drawBresenhamLine(gridBeginX, gridBeginY, gridEndX, gridEndY);
 	}
 
 	if (shouldDrawUserLine) {
