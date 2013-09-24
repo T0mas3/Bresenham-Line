@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
-
-#include <iostream>
+#include <iostream> // TODO unused?
+#include <math.h>       /* fabs */
 using namespace std;
 
 #define GRID_SIZE 32
@@ -17,13 +17,19 @@ using namespace std;
 int windowSizeH = 600;
 int windowSizeV = 600;
 
-bool drawLine = false;
+bool shouldDrawUserLine = false;
+bool shouldDrawBresenhamLine = false;
 
 float beginX = 0;
 float beginY = 0;
+float endX = 0;
+float endY = 0;
 
-float endX = 1;
-float endY = 1;
+int gridBeginX = 0;
+int gridBeginY = 0;
+int gridEndX = 0;
+int gridEndY = 0;
+
 
 void transformScreenToWorldCoordinates(int screenX, int screenY, float &worldX, float &worldY) {
 
@@ -31,11 +37,16 @@ void transformScreenToWorldCoordinates(int screenX, int screenY, float &worldX, 
 	worldY = ((float)screenY / (float)windowSizeV) * -2 + 1;
 }
 
+void transformWorldToGridCoordinates(float worldX, float worldY, int &screenX, int &screenY){
+	screenX = (int)( ( ( endX+1)/2 ) * GRID_SIZE );
+	screenY = (int)( ( (-endY+1)/2 ) * GRID_SIZE );
+}
+
 void colorGridCell(int x, int y) {
 
 	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
 	float topLeftX = (cornerLength * x) - 1;
-	float topLeftY = (cornerLength * y) - 1;
+	float topLeftY = ((cornerLength * y) - 1) * -1;
 
 	glColor3f(0, 0.5, 0.5);
 
@@ -43,10 +54,27 @@ void colorGridCell(int x, int y) {
 		glVertex2f(topLeftX, topLeftY);
 		glVertex2f(topLeftX + cornerLength, topLeftY);
 
-		glVertex2f(topLeftX + cornerLength, topLeftY + cornerLength);
-		glVertex2f(topLeftX, topLeftY + cornerLength);
+		glVertex2f(topLeftX + cornerLength, topLeftY - cornerLength);
+		glVertex2f(topLeftX, topLeftY - cornerLength);
 	glEnd();
 
+}
+
+void drawBresenhamLine(){
+
+	int deltax = gridEndX - gridBeginX;
+	int deltay = gridEndY - gridBeginY;
+	float error = 0;
+	float deltaerr = fabs((float)deltay / (float)deltax);
+	int y = gridBeginY;
+	for (int x = gridBeginX; x <= gridEndX; x++) {
+		colorGridCell(x, y);
+		error = error + deltaerr;
+		if (error >= 0.5) {
+			y = y + 1;
+			error = error - 1.0;
+		}
+	}
 }
 
 void mouseClickCallback (int button, int state, int x, int y){
@@ -57,9 +85,18 @@ void mouseClickCallback (int button, int state, int x, int y){
 			transformScreenToWorldCoordinates(x, y, beginX, beginY);
 			endX = beginX;
 			endY = beginY;
-			drawLine = true;
+			shouldDrawUserLine = true;
 
+			transformWorldToGridCoordinates(beginX, beginY, gridBeginX, gridBeginY);
+			gridEndX = gridBeginX;
+			gridEndY = gridBeginY;
+			shouldDrawBresenhamLine = true;
 		}
+//		else if (state == GLUT_UP) {
+//			transformWorldToGridCoordinates(beginX, beginY, gridBeginX, gridBeginY);
+//			transformWorldToGridCoordinates(endX, endY, gridEndX, gridEndY);
+//
+//		}
 		glutPostRedisplay();
 	}
 }
@@ -67,6 +104,7 @@ void mouseClickCallback (int button, int state, int x, int y){
 void mouseDragCallback(int x, int y){
 
 	transformScreenToWorldCoordinates(x, y, endX, endY);
+	transformWorldToGridCoordinates(endX, endY, gridEndX, gridEndY);
 
 	glutPostRedisplay();
 }
@@ -104,7 +142,11 @@ void display(void) {
 
 	drawGrid();
 
-	if (drawLine) {
+	if (shouldDrawBresenhamLine){
+		drawBresenhamLine();
+	}
+
+	if (shouldDrawUserLine) {
 		drawUserLine();
 	}
 
