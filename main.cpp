@@ -58,14 +58,12 @@ void transformWorldToGridCoordinates(float worldX, float worldY, int &gridX, int
 
 void transformGridToWorldCoordinates(int gridX, int gridY, float &worldX, float &worldY, bool cellCenter){
 
-	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
-
 	worldX = ( ( (float)gridX / GRID_SIZE) * 2 ) - 1;
 	worldY = ( ( (float)gridY / GRID_SIZE) * -2 ) + 1;
 
 	if (cellCenter){
-		worldX += (cornerLength/2);
-		worldY -= (cornerLength/2);
+		worldX += (CORNER_LENGTH / 2);
+		worldY -= (CORNER_LENGTH / 2);
 	}
 
 }
