@@ -10,9 +10,12 @@
 #include <GL/glut.h>
 #include <iostream> // TODO unused?
 #include <math.h>       /* fabs */
+#include <sys/time.h>
+#include <unistd.h>
 using namespace std;
 
 #define GRID_SIZE 32
+#define RAND_SEED 1
 
 int windowSizeH = 600;
 int windowSizeV = 600;
@@ -70,40 +73,74 @@ void colorGridCell(int x, int y) {
 
 }
 
-void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX, int gridEndY){
+void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
+		int gridEndY, bool useInts, bool draw) {
 
 	bool steep = abs(gridEndY - gridBeginY) > abs(gridEndX - gridBeginX);
-	if (steep){
+	if (steep) {
 		swap(gridBeginX, gridBeginY);
-		swap(gridEndX,   gridEndY);
+		swap(gridEndX, gridEndY);
 	}
 
-	if (gridBeginX > gridEndX){
-        swap(gridBeginX, gridEndX);
-        swap(gridBeginY, gridEndY);
+	if (gridBeginX > gridEndX) {
+		swap(gridBeginX, gridEndX);
+		swap(gridBeginY, gridEndY);
 	}
 
-	int deltaX = gridEndX - gridBeginX;
-	int deltay = abs (gridEndY - gridBeginY);
-	int error = deltaX / 2;
-	int currentY = gridBeginY;
+	if (useInts) {
+		int deltaX = gridEndX - gridBeginX;
+		int deltay = abs(gridEndY - gridBeginY);
+		int error = deltaX / 2;
+		int currentY = gridBeginY;
 
-	int yStep = 1;
-	if (gridBeginY >= gridEndY){
-		yStep = -1;
-	}
-
-	for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
-		if (steep) {
-			colorGridCell(currentY, currentX);
-		} else {
-			colorGridCell(currentX, currentY);
+		int yStep = 1;
+		if (gridBeginY >= gridEndY) {
+			yStep = -1;
 		}
 
-		error = error - deltay;
-		if (error < 0) {
-			currentY = currentY + yStep;
-			error = error + deltaX;
+		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
+
+			if (draw) {
+				if (steep) {
+					colorGridCell(currentY, currentX);
+				} else {
+					colorGridCell(currentX, currentY);
+				}
+			}
+
+			error = error - deltay;
+			if (error < 0) {
+				currentY = currentY + yStep;
+				error = error + deltaX;
+			}
+		}
+	} else {
+		int deltaX = gridEndX - gridBeginX;
+		int deltay = abs(gridEndY - gridBeginY);
+		float error = 0;
+		float deltaError = fabs((float) deltay / (float) deltaX);
+		int currentY = gridBeginY;
+
+		int yStep = 1;
+		if (gridBeginY >= gridEndY) {
+			yStep = -1;
+		}
+
+		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
+			if (draw){
+				if (steep) {
+					colorGridCell(currentY, currentX);
+				} else {
+					colorGridCell(currentX, currentY);
+				}
+			}
+
+
+			error = error + deltaError;
+			if (error >= 0.5) {
+				currentY = currentY + yStep;
+				error = error - 1.0;
+			}
 		}
 	}
 }
@@ -189,7 +226,7 @@ void display(void) {
 	drawGrid();
 
 	if (shouldDrawBresenhamLine){
-		drawBresenhamLine(gridBeginX, gridBeginY, gridEndX, gridEndY);
+		drawBresenhamLine(gridBeginX, gridBeginY, gridEndX, gridEndY, false, true);
 	}
 
 	if (shouldDrawUserLine) {
@@ -199,10 +236,59 @@ void display(void) {
 	glFlush();
 }
 
+int getRandomIntInRange(int min, int max) {
+	return min + (rand() % (int)(max - min + 1)); // TODO review algorithm
+	// TODO make random seed always the same
+}
+
+long getLineDrawingExecutionSpeedMicroseconds(bool useInts, long lineDraws){
+
+	int min = 0;
+	int max = GRID_SIZE - 1;
+
+	int randBeginX;
+	int randBeginY;
+	int randEndX;
+	int randEndY;
+
+	srand(RAND_SEED);
+
+	struct timeval start, end;
+
+	gettimeofday(&start, NULL);
+
+	for (long i = 0; i < lineDraws; i++) {
+		randBeginX = getRandomIntInRange(min, max);
+		randBeginY = getRandomIntInRange(min, max);
+		randEndX = getRandomIntInRange(min, max);
+		randEndY = getRandomIntInRange(min, max);
+
+		drawBresenhamLine(randBeginX, randBeginY, randEndX, randEndY, useInts, false);
+
+		//		cout << randBeginX << " " << randBeginX << " to " << randEndX << " " << randEndY << endl;
+	}
+
+	gettimeofday(&end, NULL);
+
+	return end.tv_usec - start.tv_usec;
+}
+
+void testBresenhamLineAlgorithmExecutionSpeed(long numberOfCalls){
+
+	long execTimeUsingInt   = getLineDrawingExecutionSpeedMicroseconds(true, numberOfCalls);
+	long execTimeUsingFloat = getLineDrawingExecutionSpeedMicroseconds(false, numberOfCalls);
+
+	cout << execTimeUsingInt << " " << execTimeUsingFloat << endl;
+}
+
 void init(void) {
 }
 
 int main(int argc, char *argv[]) {
+
+//	testBresenhamLineAlgorithmExecutionSpeed(10000);
+//	return 0;
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 	glutInitWindowSize(windowSizeH, windowSizeV);
