@@ -19,6 +19,11 @@ using namespace std;
 #define KEY_SPACE 32
 #define RAND_SEED 1
 
+#define RED 1
+#define GREEN 2
+#define BLUE 3
+#define ORANGE 4
+
 const float HALF_GRID_SIZE = GRID_SIZE / 2;
 const float CORNER_LENGTH = 1.0 / (float)HALF_GRID_SIZE;
 
@@ -187,6 +192,9 @@ void mouseClickCallback (int button, int state, int x, int y){
 //
 //		}
 		glutPostRedisplay();
+	} else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_UP)){
+		showHelp = !showHelp;
+		glutPostRedisplay();
 	}
 }
 
@@ -196,19 +204,6 @@ void mouseDragCallback(int x, int y){
 	transformWorldToGridCoordinates(mouseLine.end.x, mouseLine.end.y, approxLine.end.x, approxLine.end.y);
 
 	glutPostRedisplay();
-}
-
-void keyboardCallback(unsigned char key, int x, int y){
-
-	switch (key) {
-
-	case KEY_SPACE:
-
-		showHelp = !showHelp;
-		glutPostRedisplay();
-		break;
-	}
-
 }
 
 void drawUserLine(){
@@ -249,6 +244,15 @@ void drawGrid(){
 
 //TODO do not forget to reset colors
 
+void renderBitmapString(float x, float y, void *font, char *string) {
+
+  char *c;
+  glRasterPos2f(x, y);
+  for (c=string; *c != '\0'; c++) {
+    glutBitmapCharacter(font, *c);
+  }
+}
+
 void drawHelpOverlay(){
 
 	glColor3f(0.1, 0.1, 0.1);
@@ -257,13 +261,16 @@ void drawHelpOverlay(){
 		glVertex2f(-1.0, 1.0);
 		glVertex2f(1.0, 1.0);
 
-		glVertex2f(1.0, 0);
-		glVertex2f(-1.0, 0);
+		glVertex2f(1.0, 0.7);
+		glVertex2f(-1.0, 0.7);
 	glEnd();
 
-
 	glColor3f(1.0, 1.0, 1.0);
-	glRasterPos2f(-0.9, 0.9);
+
+	char *helpString = "Hold and drag left mouse button to draw a line";
+	renderBitmapString(-0.9, 0.9, GLUT_BITMAP_TIMES_ROMAN_24, helpString);
+	helpString = "Right close this help window";
+	renderBitmapString(-0.9, 0.8, GLUT_BITMAP_TIMES_ROMAN_24, helpString);
 }
 
 void display(void) {
@@ -288,8 +295,7 @@ void display(void) {
 }
 
 int getRandomIntInRange(int min, int max) {
-	return min + (rand() % (int)(max - min + 1)); // TODO review algorithm
-	// TODO make random seed always the same
+	return min + (rand() % (int)(max - min + 1));
 }
 
 long getLineDrawingExecutionSpeedMicroseconds(bool useInts, long lineDraws){
@@ -337,9 +343,6 @@ void init(void) {
 
 int main(int argc, char *argv[]) {
 
-//	testBresenhamLineAlgorithmExecutionSpeed(10000);
-//	return 0;
-
 	if (argc == 2) {
 
 		int numberOfCalls = atoi(argv[1]);
@@ -357,13 +360,12 @@ int main(int argc, char *argv[]) {
 		glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 		glutInitWindowSize(windowSizeH, windowSizeV);
 		glutInitWindowPosition(100, 50);
-		glutCreateWindow("Bresenham's line algorithm demo - press \"ENTER\" for help");
+		glutCreateWindow("Bresenham's line algorithm: left-click mouse drag - draws line, right-click - show help");
 		init();
 		glutDisplayFunc(display);
 
 		glutMouseFunc(mouseClickCallback);
 		glutMotionFunc(mouseDragCallback);
-		glutKeyboardFunc(keyboardCallback);
 
 		glutMainLoop();
 	} else {
