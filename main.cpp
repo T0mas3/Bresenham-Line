@@ -14,7 +14,8 @@
 #include <unistd.h>
 using namespace std;
 
-#define GRID_SIZE 32
+#define GRID_SIZE 32 // TODO fix grid when odd number of cells
+#define HALF_GRID_SIZE GRID_SIZE/2
 #define KEY_SPACE 32
 #define RAND_SEED 1
 
@@ -220,16 +221,15 @@ void drawUserLine(){
 void drawGrid(){
 
 	glColor3f(0.5, 0.5, 0.5);
-	int i;
 
 	glBegin(GL_LINES);
-	for (i = -(GRID_SIZE / 2); i <= (GRID_SIZE / 2); i++) { //TODO optimize
-		float x = i / (float) (GRID_SIZE / 2);
-		glVertex2f(x, -1.0);
-		glVertex2f(x, 1.0);
+	for (int i = -HALF_GRID_SIZE; i <= HALF_GRID_SIZE; i++) {
+		float xAndY = i / (float)(HALF_GRID_SIZE);
+		glVertex2f(xAndY, -1.0);
+		glVertex2f(xAndY, 1.0);
 
-		glVertex2f(-1.0, x);
-		glVertex2f(1.0, x);
+		glVertex2f(-1.0, xAndY);
+		glVertex2f(1.0, xAndY);
 	}
 	glEnd();
 }
