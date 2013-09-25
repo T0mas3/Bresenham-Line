@@ -315,13 +315,11 @@ long getLineDrawingExecutionSpeedMicroseconds(bool useInts, long lineDraws){
 		randEndY = getRandomIntInRange(min, max);
 
 		drawBresenhamLine(randBeginX, randBeginY, randEndX, randEndY, useInts, false);
-
-		//		cout << randBeginX << " " << randBeginX << " to " << randEndX << " " << randEndY << endl;
 	}
 
 	gettimeofday(&end, NULL);
 
-	return end.tv_usec - start.tv_usec;
+	return (end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec);
 }
 
 void testBresenhamLineAlgorithmExecutionSpeed(long numberOfCalls){
@@ -329,7 +327,9 @@ void testBresenhamLineAlgorithmExecutionSpeed(long numberOfCalls){
 	long execTimeUsingInt   = getLineDrawingExecutionSpeedMicroseconds(true, numberOfCalls);
 	long execTimeUsingFloat = getLineDrawingExecutionSpeedMicroseconds(false, numberOfCalls);
 
-	cout << execTimeUsingInt << " " << execTimeUsingFloat << endl;
+	cout << "Execution time using integers: " << execTimeUsingInt   << " microseconds" << endl;
+	cout << "Execution time using floats:   " << execTimeUsingFloat << " microseconds" << endl;
+	cout << "Difference (float version - integer version): " << execTimeUsingFloat - execTimeUsingInt << " microseconds" << endl;
 }
 
 void init(void) {
@@ -340,18 +340,36 @@ int main(int argc, char *argv[]) {
 //	testBresenhamLineAlgorithmExecutionSpeed(10000);
 //	return 0;
 
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
-	glutInitWindowSize(windowSizeH, windowSizeV);
-	glutInitWindowPosition(100, 50);
-	glutCreateWindow("Bresenham's line algorithm demo - press \"ENTER\" for help");
-	init();
-	glutDisplayFunc(display);
+	if (argc == 2) {
 
-	glutMouseFunc(mouseClickCallback);
-	glutMotionFunc(mouseDragCallback);
-	glutKeyboardFunc(keyboardCallback);
+		int numberOfCalls = atoi(argv[1]);
 
-	glutMainLoop();
+		if (numberOfCalls < 1){
+			cout << "Error: Invalid parameter. Number of calls must be positive, non-zero integer." << endl;
+		} else {
+			cout << "Starting test. Calculating lines using Bresenham's algorithm for " << numberOfCalls << " times" << endl;
+			testBresenhamLineAlgorithmExecutionSpeed(numberOfCalls);
+			cout << "Test finished" << endl;
+		}
+
+	} else if (argc == 1) {
+		glutInit(&argc, argv);
+		glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
+		glutInitWindowSize(windowSizeH, windowSizeV);
+		glutInitWindowPosition(100, 50);
+		glutCreateWindow("Bresenham's line algorithm demo - press \"ENTER\" for help");
+		init();
+		glutDisplayFunc(display);
+
+		glutMouseFunc(mouseClickCallback);
+		glutMotionFunc(mouseDragCallback);
+		glutKeyboardFunc(keyboardCallback);
+
+		glutMainLoop();
+	} else {
+		cout << "Error: Wrong argument count. Usage: No parameters - open line drawing window,"<< endl
+				<< "1 parameter - perform benchmark by approximating entered number of random lines";
+	}
+
 	return 0;
 }
