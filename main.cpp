@@ -27,10 +27,10 @@ bool shouldDrawBresenhamLine = false;
 bool snapToGrid = true;
 bool showHelp = false;
 
-float beginX = 0;
-float beginY = 0;
-float endX = 0;
-float endY = 0;
+float mouseBeginX = 0;
+float mouseBeginY = 0;
+float mouseEndX = 0;
+float mouseEndY = 0;
 
 // TODO better titles
 int gridBeginX = 0;
@@ -38,6 +38,10 @@ int gridBeginY = 0;
 int gridEndX = 0;
 int gridEndY = 0;
 
+float userLineBeginX = 0;
+float userLineBeginY = 0;
+float userLineEndX = 0;
+float userLineEndY = 0;
 
 void transformScreenToWorldCoordinates(int screenX, int screenY, float &worldX, float &worldY) {
 
@@ -153,12 +157,12 @@ void mouseClickCallback (int button, int state, int x, int y){
 	if (button == GLUT_LEFT_BUTTON){
 
 		if ((state == GLUT_DOWN)){
-			transformScreenToWorldCoordinates(x, y, beginX, beginY);
-			endX = beginX;
-			endY = beginY;
+			transformScreenToWorldCoordinates(x, y, mouseBeginX, mouseBeginY);
+			mouseEndX = mouseBeginX;
+			mouseEndY = mouseBeginY;
 			shouldDrawUserLine = true;
 
-			transformWorldToGridCoordinates(beginX, beginY, gridBeginX, gridBeginY);
+			transformWorldToGridCoordinates(mouseBeginX, mouseBeginY, gridBeginX, gridBeginY);
 			gridEndX = gridBeginX;
 			gridEndY = gridBeginY;
 			shouldDrawBresenhamLine = true;
@@ -174,8 +178,8 @@ void mouseClickCallback (int button, int state, int x, int y){
 
 void mouseDragCallback(int x, int y){
 
-	transformScreenToWorldCoordinates(x, y, endX, endY);
-	transformWorldToGridCoordinates(endX, endY, gridEndX, gridEndY);
+	transformScreenToWorldCoordinates(x, y, mouseEndX, mouseEndY);
+	transformWorldToGridCoordinates(mouseEndX, mouseEndY, gridEndX, gridEndY);
 
 	glutPostRedisplay();
 }
@@ -195,26 +199,21 @@ void keyboardCallback(unsigned char key, int x, int y){
 
 void drawUserLine(){
 
-	float lineBeginX = 0;
-	float lineBeginY = 0;
-	float lineEndX = 0;
-	float lineEndY = 0;
-
 	if (snapToGrid) {
-		transformGridToWorldCoordinates(gridBeginX, gridBeginY, lineBeginX, lineBeginY);
-		transformGridToWorldCoordinates(gridEndX, gridEndY, lineEndX, lineEndY);
+		transformGridToWorldCoordinates(gridBeginX, gridBeginY, userLineBeginX, userLineBeginY);
+		transformGridToWorldCoordinates(gridEndX, gridEndY, userLineEndX, userLineEndY);
 	} else {
-		lineBeginX = beginX;
-		lineBeginY = beginY;
-		lineEndX = endX;
-		lineEndY = endY;
+		userLineBeginX = mouseBeginX;
+		userLineBeginY = mouseBeginY;
+		userLineEndX = mouseEndX;
+		userLineEndY = mouseEndY;
 	}
 
 	glColor3f(1.0, 0.0, 0.0);
 
 	glBegin(GL_LINES);
-		glVertex2f(lineBeginX, lineBeginY);
-		glVertex2f(lineEndX, lineEndY);
+		glVertex2f(userLineBeginX, userLineBeginY);
+		glVertex2f(userLineEndX, userLineEndY);
 	glEnd();
 }
 
