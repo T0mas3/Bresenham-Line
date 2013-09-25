@@ -15,11 +15,30 @@
 using namespace std;
 
 #define GRID_SIZE 32 // TODO fix grid when odd number of cells
+#define USE_OPTIMIZED_LINE_ALG true
 #define KEY_SPACE 32
 #define RAND_SEED 1
 
 const float HALF_GRID_SIZE = GRID_SIZE / 2;
 const float CORNER_LENGTH = 1.0 / (float)HALF_GRID_SIZE;
+
+struct pointF2 {
+  float x;
+  float y;
+};
+
+struct pointInt2 {
+  int x;
+  int y;
+};
+
+struct lineF2 {
+	pointF2 begin, end;
+};
+
+struct lineInt2 {
+	pointInt2 begin, end;
+};
 
 int windowSizeH = 600;
 int windowSizeV = 600;
@@ -29,21 +48,10 @@ bool shouldDrawBresenhamLine = false;
 bool snapToGrid = true;
 bool showHelp = false;
 
-float mouseBeginX = 0;
-float mouseBeginY = 0;
-float mouseEndX = 0;
-float mouseEndY = 0;
+lineF2 mouseLine;
+lineF2 userLine;
+lineInt2 approxLine;
 
-// TODO better titles
-int gridBeginX = 0;
-int gridBeginY = 0;
-int gridEndX = 0;
-int gridEndY = 0;
-
-float userLineBeginX = 0;
-float userLineBeginY = 0;
-float userLineEndX = 0;
-float userLineEndY = 0;
 
 void transformScreenToWorldCoordinates(int screenX, int screenY, float &worldX, float &worldY) {
 
@@ -87,33 +95,33 @@ void colorGridCell(int x, int y) {
 
 }
 
-void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
-		int gridEndY, bool useInts, bool draw) {
+void drawBresenhamLine(int lineBeginX, int lineBeginY, int lineEndX,
+		int lineEndY, bool useInts, bool draw) {
 
-	bool isSteep = abs(gridEndY - gridBeginY) > abs(gridEndX - gridBeginX);
+	bool isSteep = abs(lineEndY - lineBeginY) > abs(lineEndX - lineBeginX);
 	if (isSteep) {
-		swap(gridBeginX, gridBeginY);
-		swap(gridEndX, gridEndY);
+		swap(lineBeginX, lineBeginY);
+		swap(lineEndX, lineEndY);
 	}
 
-	if (gridBeginX > gridEndX) {
-		swap(gridBeginX, gridEndX);
-		swap(gridBeginY, gridEndY);
+	if (lineBeginX > lineEndX) {
+		swap(lineBeginX, lineEndX);
+		swap(lineBeginY, lineEndY);
 	}
 
-	int deltaX = gridEndX - gridBeginX;
-	int deltay = abs(gridEndY - gridBeginY);
-	int currentY = gridBeginY;
+	int deltaX = lineEndX - lineBeginX;
+	int deltay = abs(lineEndY - lineBeginY);
+	int currentY = lineBeginY;
 
 	if (useInts) {
 		int error = deltaX / 2;
 
 		int yStep = 1;
-		if (gridBeginY >= gridEndY) {
+		if (lineBeginY >= lineEndY) {
 			yStep = -1;
 		}
 
-		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
+		for (int currentX = lineBeginX; currentX <= lineEndX; currentX++) {
 
 			if (draw) {
 				if (isSteep) {
@@ -134,11 +142,11 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 		float deltaError = fabs((float) deltay / (float) deltaX);
 
 		int yStep = 1;
-		if (gridBeginY >= gridEndY) {
+		if (lineBeginY >= lineEndY) {
 			yStep = -1;
 		}
 
-		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
+		for (int currentX = lineBeginX; currentX <= lineEndX; currentX++) {
 			if (draw) {
 				if (isSteep) {
 					colorGridCell(currentY, currentX);
@@ -157,24 +165,25 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 	}
 }
 
+
 void mouseClickCallback (int button, int state, int x, int y){
 
 	if (button == GLUT_LEFT_BUTTON){
 
 		if ((state == GLUT_DOWN)){
-			transformScreenToWorldCoordinates(x, y, mouseBeginX, mouseBeginY);
-			mouseEndX = mouseBeginX;
-			mouseEndY = mouseBeginY;
+			transformScreenToWorldCoordinates(x, y, mouseLine.begin.x, mouseLine.begin.y);
+			mouseLine.end.x = mouseLine.begin.x;
+			mouseLine.end.y = mouseLine.begin.y;
 			shouldDrawUserLine = true;
 
-			transformWorldToGridCoordinates(mouseBeginX, mouseBeginY, gridBeginX, gridBeginY);
-			gridEndX = gridBeginX;
-			gridEndY = gridBeginY;
+			transformWorldToGridCoordinates(mouseLine.begin.x, mouseLine.begin.y, approxLine.begin.x, approxLine.begin.y);
+			approxLine.end.x = approxLine.begin.x;
+			approxLine.end.y = approxLine.begin.y;
 			shouldDrawBresenhamLine = true;
 		}
 //		else if (state == GLUT_UP) {
-//			transformWorldToGridCoordinates(beginX, beginY, gridBeginX, gridBeginY);
-//			transformWorldToGridCoordinates(endX, endY, gridEndX, gridEndY);
+//			transformWorldToGridCoordinates(beginX, beginY, approxLine.begin.x, approxLine.begin.y);
+//			transformWorldToGridCoordinates(endX, endY, approxLine.end.x, approxLine.end.y);
 //
 //		}
 		glutPostRedisplay();
@@ -183,8 +192,8 @@ void mouseClickCallback (int button, int state, int x, int y){
 
 void mouseDragCallback(int x, int y){
 
-	transformScreenToWorldCoordinates(x, y, mouseEndX, mouseEndY);
-	transformWorldToGridCoordinates(mouseEndX, mouseEndY, gridEndX, gridEndY);
+	transformScreenToWorldCoordinates(x, y, mouseLine.end.x, mouseLine.end.y);
+	transformWorldToGridCoordinates(mouseLine.end.x, mouseLine.end.y, approxLine.end.x, approxLine.end.y);
 
 	glutPostRedisplay();
 }
@@ -205,20 +214,20 @@ void keyboardCallback(unsigned char key, int x, int y){
 void drawUserLine(){
 
 	if (snapToGrid) {
-		transformGridToWorldCoordinates(gridBeginX, gridBeginY, userLineBeginX, userLineBeginY, true);
-		transformGridToWorldCoordinates(gridEndX, gridEndY, userLineEndX, userLineEndY, true);
+		transformGridToWorldCoordinates(approxLine.begin.x, approxLine.begin.y, userLine.begin.x, userLine.begin.y, true);
+		transformGridToWorldCoordinates(approxLine.end.x, approxLine.end.y, userLine.end.x, userLine.end.y, true);
 	} else {
-		userLineBeginX = mouseBeginX;
-		userLineBeginY = mouseBeginY;
-		userLineEndX = mouseEndX;
-		userLineEndY = mouseEndY;
+		userLine.begin.x = mouseLine.begin.x;
+		userLine.begin.y = mouseLine.begin.x;
+		userLine.end.x = mouseLine.end.x;
+		userLine.end.y = mouseLine.end.y;
 	}
 
 	glColor3f(1.0, 0.0, 0.0);
 
 	glBegin(GL_LINES);
-		glVertex2f(userLineBeginX, userLineBeginY);
-		glVertex2f(userLineEndX, userLineEndY);
+		glVertex2f(userLine.begin.x, userLine.begin.y);
+		glVertex2f(userLine.end.x, userLine.end.y);
 	glEnd();
 }
 
@@ -262,7 +271,7 @@ void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (shouldDrawBresenhamLine){
-		drawBresenhamLine(gridBeginX, gridBeginY, gridEndX, gridEndY, false, true);
+		drawBresenhamLine(approxLine.begin.x, approxLine.begin.y, approxLine.end.x, approxLine.end.y, USE_OPTIMIZED_LINE_ALG, true);
 	}
 
 	drawGrid();
