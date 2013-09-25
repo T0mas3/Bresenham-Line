@@ -19,6 +19,7 @@ int windowSizeV = 600;
 
 bool shouldDrawUserLine = false;
 bool shouldDrawBresenhamLine = false;
+bool snapToGrid = true;
 
 float beginX = 0;
 float beginY = 0;
@@ -38,9 +39,17 @@ void transformScreenToWorldCoordinates(int screenX, int screenY, float &worldX, 
 	worldY = ((float)screenY / (float)windowSizeV) * -2 + 1;
 }
 
-void transformWorldToGridCoordinates(float worldX, float worldY, int &screenX, int &screenY){
-	screenX = (int)( ( ( endX+1)/2 ) * GRID_SIZE );
-	screenY = (int)( ( (-endY+1)/2 ) * GRID_SIZE );
+void transformWorldToGridCoordinates(float worldX, float worldY, int &gridX, int &gridY){
+	gridX = (int)( ( ( worldX+1)/2 ) * GRID_SIZE );
+	gridY = (int)( ( (-worldY+1)/2 ) * GRID_SIZE );
+}
+
+void transformGridToWorldCoordinates(int gridX, int gridY, float &worldX, float &worldY){
+
+	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
+
+	worldX = ( ( (float)gridX / GRID_SIZE) * 2 ) - 1 + (cornerLength/2);
+	worldY = ( ( (float)gridY / GRID_SIZE) * -2 ) + 1 - (cornerLength/2);
 }
 
 void colorGridCell(int x, int y) {
@@ -133,11 +142,26 @@ void mouseDragCallback(int x, int y){
 
 void drawUserLine(){
 
+	float lineBeginX = 0;
+	float lineBeginY = 0;
+	float lineEndX = 0;
+	float lineEndY = 0;
+
+	if (snapToGrid) {
+		transformGridToWorldCoordinates(gridBeginX, gridBeginY, lineBeginX, lineBeginY);
+		transformGridToWorldCoordinates(gridEndX, gridEndY, lineEndX, lineEndY);
+	} else {
+		lineBeginX = beginX;
+		lineBeginY = beginY;
+		lineEndX = endX;
+		lineEndY = endY;
+	}
+
 	glColor3f(1.0, 0.0, 0.0);
 
 	glBegin(GL_LINES);
-		glVertex2f(beginX, beginY);
-		glVertex2f(endX, endY);
+		glVertex2f(lineBeginX, lineBeginY);
+		glVertex2f(lineEndX, lineEndY);
 	glEnd();
 }
 
