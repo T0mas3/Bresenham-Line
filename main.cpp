@@ -257,11 +257,11 @@ void display(void) {
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	drawGrid();
-
 	if (shouldDrawBresenhamLine){
 		drawBresenhamLine(gridBeginX, gridBeginY, gridEndX, gridEndY, false, true);
 	}
+
+	drawGrid();
 
 	if (shouldDrawUserLine) {
 		drawUserLine();
