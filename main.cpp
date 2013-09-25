@@ -15,6 +15,7 @@
 using namespace std;
 
 #define GRID_SIZE 32
+#define KEY_SPACE 32
 #define RAND_SEED 1
 
 int windowSizeH = 600;
@@ -23,6 +24,7 @@ int windowSizeV = 600;
 bool shouldDrawUserLine = false;
 bool shouldDrawBresenhamLine = false;
 bool snapToGrid = true;
+bool showHelp = false;
 
 float beginX = 0;
 float beginY = 0;
@@ -177,6 +179,19 @@ void mouseDragCallback(int x, int y){
 	glutPostRedisplay();
 }
 
+void keyboardCallback(unsigned char key, int x, int y){
+
+	switch (key) {
+
+	case KEY_SPACE:
+
+		showHelp = !showHelp;
+		glutPostRedisplay();
+		break;
+	}
+
+}
+
 void drawUserLine(){
 
 	float lineBeginX = 0;
@@ -219,6 +234,25 @@ void drawGrid(){
 	glEnd();
 }
 
+//TODO do not forget to reset colors
+
+void drawHelpOverlay(){
+
+	glColor3f(0.1, 0.1, 0.1);
+
+	glBegin(GL_QUADS);
+		glVertex2f(-1.0, 1.0);
+		glVertex2f(1.0, 1.0);
+
+		glVertex2f(1.0, 0);
+		glVertex2f(-1.0, 0);
+	glEnd();
+
+
+	glColor3f(1.0, 1.0, 1.0);
+	glRasterPos2f(-0.9, 0.9);
+}
+
 void display(void) {
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -231,6 +265,10 @@ void display(void) {
 
 	if (shouldDrawUserLine) {
 		drawUserLine();
+	}
+
+	if (showHelp) {
+		drawHelpOverlay();
 	}
 
 	glFlush();
@@ -293,12 +331,13 @@ int main(int argc, char *argv[]) {
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 	glutInitWindowSize(windowSizeH, windowSizeV);
 	glutInitWindowPosition(100, 50);
-	glutCreateWindow("CG1");
+	glutCreateWindow("Bresenham's line algorithm demo - press \"ENTER\" for help");
 	init();
 	glutDisplayFunc(display);
 
 	glutMouseFunc(mouseClickCallback);
 	glutMotionFunc(mouseDragCallback);
+	glutKeyboardFunc(keyboardCallback);
 
 	glutMainLoop();
 	return 0;
