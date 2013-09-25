@@ -15,9 +15,11 @@
 using namespace std;
 
 #define GRID_SIZE 32 // TODO fix grid when odd number of cells
-#define HALF_GRID_SIZE GRID_SIZE/2
 #define KEY_SPACE 32
 #define RAND_SEED 1
+
+const float HALF_GRID_SIZE = GRID_SIZE / 2;
+const float CORNER_LENGTH = 1.0 / (float)HALF_GRID_SIZE;
 
 int windowSizeH = 600;
 int windowSizeV = 600;
@@ -54,28 +56,35 @@ void transformWorldToGridCoordinates(float worldX, float worldY, int &gridX, int
 	gridY = (int)( ( (-worldY+1)/2 ) * GRID_SIZE );
 }
 
-void transformGridToWorldCoordinates(int gridX, int gridY, float &worldX, float &worldY){
+void transformGridToWorldCoordinates(int gridX, int gridY, float &worldX, float &worldY, bool cellCenter){
 
 	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
 
-	worldX = ( ( (float)gridX / GRID_SIZE) * 2 ) - 1 + (cornerLength/2);
-	worldY = ( ( (float)gridY / GRID_SIZE) * -2 ) + 1 - (cornerLength/2);
+	worldX = ( ( (float)gridX / GRID_SIZE) * 2 ) - 1;
+	worldY = ( ( (float)gridY / GRID_SIZE) * -2 ) + 1;
+
+	if (cellCenter){
+		worldX += (cornerLength/2);
+		worldY -= (cornerLength/2);
+	}
+
 }
 
 void colorGridCell(int x, int y) {
 
-	float cornerLength = (float)(1.0/(GRID_SIZE/2)); // TODO optimize
-	float topLeftX = (cornerLength * x) - 1;
-	float topLeftY = ((cornerLength * y) - 1) * -1;
+	float topLeftX;
+	float topLeftY;
+
+	transformGridToWorldCoordinates(x, y, topLeftX, topLeftY, false);
 
 	glColor3f(0, 0.5, 0.5);
 
 	glBegin(GL_QUADS);
 		glVertex2f(topLeftX, topLeftY);
-		glVertex2f(topLeftX + cornerLength, topLeftY);
+		glVertex2f(topLeftX + CORNER_LENGTH, topLeftY);
 
-		glVertex2f(topLeftX + cornerLength, topLeftY - cornerLength);
-		glVertex2f(topLeftX, topLeftY - cornerLength);
+		glVertex2f(topLeftX + CORNER_LENGTH, topLeftY - CORNER_LENGTH);
+		glVertex2f(topLeftX, topLeftY - CORNER_LENGTH);
 	glEnd();
 
 }
@@ -200,8 +209,8 @@ void keyboardCallback(unsigned char key, int x, int y){
 void drawUserLine(){
 
 	if (snapToGrid) {
-		transformGridToWorldCoordinates(gridBeginX, gridBeginY, userLineBeginX, userLineBeginY);
-		transformGridToWorldCoordinates(gridEndX, gridEndY, userLineEndX, userLineEndY);
+		transformGridToWorldCoordinates(gridBeginX, gridBeginY, userLineBeginX, userLineBeginY, true);
+		transformGridToWorldCoordinates(gridEndX, gridEndY, userLineEndX, userLineEndY, true);
 	} else {
 		userLineBeginX = mouseBeginX;
 		userLineBeginY = mouseBeginY;
