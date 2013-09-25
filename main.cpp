@@ -90,8 +90,8 @@ void colorGridCell(int x, int y) {
 void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 		int gridEndY, bool useInts, bool draw) {
 
-	bool steep = abs(gridEndY - gridBeginY) > abs(gridEndX - gridBeginX);
-	if (steep) {
+	bool isSteep = abs(gridEndY - gridBeginY) > abs(gridEndX - gridBeginX);
+	if (isSteep) {
 		swap(gridBeginX, gridBeginY);
 		swap(gridEndX, gridEndY);
 	}
@@ -101,11 +101,12 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 		swap(gridBeginY, gridEndY);
 	}
 
+	int deltaX = gridEndX - gridBeginX;
+	int deltay = abs(gridEndY - gridBeginY);
+	int currentY = gridBeginY;
+
 	if (useInts) {
-		int deltaX = gridEndX - gridBeginX;
-		int deltay = abs(gridEndY - gridBeginY);
 		int error = deltaX / 2;
-		int currentY = gridBeginY;
 
 		int yStep = 1;
 		if (gridBeginY >= gridEndY) {
@@ -115,7 +116,7 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
 
 			if (draw) {
-				if (steep) {
+				if (isSteep) {
 					colorGridCell(currentY, currentX);
 				} else {
 					colorGridCell(currentX, currentY);
@@ -129,11 +130,8 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 			}
 		}
 	} else {
-		int deltaX = gridEndX - gridBeginX;
-		int deltay = abs(gridEndY - gridBeginY);
 		float error = 0;
 		float deltaError = fabs((float) deltay / (float) deltaX);
-		int currentY = gridBeginY;
 
 		int yStep = 1;
 		if (gridBeginY >= gridEndY) {
@@ -141,14 +139,13 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 		}
 
 		for (int currentX = gridBeginX; currentX <= gridEndX; currentX++) {
-			if (draw){
-				if (steep) {
+			if (draw) {
+				if (isSteep) {
 					colorGridCell(currentY, currentX);
 				} else {
 					colorGridCell(currentX, currentY);
 				}
 			}
-
 
 			error = error + deltaError;
 			if (error >= 0.5) {
@@ -156,6 +153,7 @@ void drawBresenhamLine(int gridBeginX, int gridBeginY, int gridEndX,
 				error = error - 1.0;
 			}
 		}
+
 	}
 }
 
