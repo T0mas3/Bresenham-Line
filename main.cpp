@@ -8,13 +8,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
-#include <iostream> // TODO unused?
-#include <math.h>       /* fabs */
+#include <iostream>
+#include <math.h> // for fabs
 #include <sys/time.h>
 #include <unistd.h>
 using namespace std;
 
-#define GRID_SIZE 32 // TODO fix grid when odd number of cells
+#define GRID_SIZE 32
 #define USE_OPTIMIZED_LINE_ALG true
 #define KEY_SPACE 32
 #define RAND_SEED 1
@@ -50,7 +50,7 @@ int windowSizeV = 600;
 
 bool shouldDrawUserLine = false;
 bool shouldDrawBresenhamLine = false;
-bool snapToGrid = true;
+bool snapToGrid = false;
 bool showHelp = false;
 
 lineF2 mouseLine;
@@ -186,11 +186,6 @@ void mouseClickCallback (int button, int state, int x, int y){
 			approxLine.end.y = approxLine.begin.y;
 			shouldDrawBresenhamLine = true;
 		}
-//		else if (state == GLUT_UP) {
-//			transformWorldToGridCoordinates(beginX, beginY, approxLine.begin.x, approxLine.begin.y);
-//			transformWorldToGridCoordinates(endX, endY, approxLine.end.x, approxLine.end.y);
-//
-//		}
 		glutPostRedisplay();
 	} else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_UP)){
 		showHelp = !showHelp;
@@ -213,7 +208,7 @@ void drawUserLine(){
 		transformGridToWorldCoordinates(approxLine.end.x, approxLine.end.y, userLine.end.x, userLine.end.y, true);
 	} else {
 		userLine.begin.x = mouseLine.begin.x;
-		userLine.begin.y = mouseLine.begin.x;
+		userLine.begin.y = mouseLine.begin.y;
 		userLine.end.x = mouseLine.end.x;
 		userLine.end.y = mouseLine.end.y;
 	}
@@ -242,8 +237,6 @@ void drawGrid(){
 	glEnd();
 }
 
-//TODO do not forget to reset colors
-
 void renderBitmapString(float x, float y, void *font, char *string) {
 
   char *c;
@@ -269,7 +262,7 @@ void drawHelpOverlay(){
 
 	char *helpString = "Hold and drag left mouse button to draw a line";
 	renderBitmapString(-0.9, 0.9, GLUT_BITMAP_TIMES_ROMAN_24, helpString);
-	helpString = "Right close this help window";
+	helpString = "Right click to close this help window";
 	renderBitmapString(-0.9, 0.8, GLUT_BITMAP_TIMES_ROMAN_24, helpString);
 }
 
@@ -338,6 +331,41 @@ void testBresenhamLineAlgorithmExecutionSpeed(long numberOfCalls){
 	cout << "Difference (float version - integer version): " << execTimeUsingFloat - execTimeUsingInt << " microseconds" << endl;
 }
 
+void changeSize(int w, int h) {
+
+	// Prevent a divide by zero, when window is too short
+	// (you cant make a window of zero width).
+	if(h == 0)
+		h = 1;
+
+
+//	if (h > w) {
+//		windowSizeH = h;
+//		windowSizeV = h;
+//	} else {
+//		windowSizeH = w;
+//		windowSizeV = w;
+//	}
+
+			windowSizeH = h;
+			windowSizeV = w;
+
+//	glutReshapeWindow (windowSizeH, windowSizeV);
+
+
+	// Use the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+
+        // Reset Matrix
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+	glViewport(0, 0, w, h);
+
+	// Get Back to the Modelview
+	glMatrixMode(GL_MODELVIEW);
+}
+
 void init(void) {
 }
 
@@ -363,10 +391,10 @@ int main(int argc, char *argv[]) {
 		glutCreateWindow("Bresenham's line algorithm: left-click mouse drag - draws line, right-click - show help");
 		init();
 		glutDisplayFunc(display);
-
 		glutMouseFunc(mouseClickCallback);
 		glutMotionFunc(mouseDragCallback);
 
+		glutReshapeFunc(changeSize);
 		glutMainLoop();
 	} else {
 		cout << "Error: Wrong argument count. Usage: No parameters - open line drawing window,"<< endl
