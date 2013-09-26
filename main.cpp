@@ -50,7 +50,7 @@ int windowSizeV = 600;
 
 bool shouldDrawUserLine = false;
 bool shouldDrawBresenhamLine = false;
-bool snapToGrid = false;
+bool snapToGrid = true;
 bool showHelp = false;
 
 lineF2 mouseLine;
